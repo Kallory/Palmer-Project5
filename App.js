@@ -18,6 +18,12 @@ export default class App extends Component {
         poi1: { coords: { latitude: 33.307146, longitude: -111.681177 } },
         poi2: { coords: { latitude: 33.423204, longitude: -111.939612 } },
         selectedMarker: null,
+        region: {
+            latitude: 33.307146,
+            longitude: -111.681177,
+            latitudeDelta: 0.09,
+            longitudeDelta: 0.04,
+        },
     };
 
     handleMarkerPress = (marker) => {
@@ -64,25 +70,99 @@ export default class App extends Component {
             [{ text: 'OK' }]
         );
     }
-
-    render() {
-        return this.state.location ? (
-            <MapView
-                style={styles.map}
-                region={{
+    handleButtonPress = (marker) => {
+        if (marker === "you") {
+            this.setState({
+                selectedMarker: marker,
+                region: {
                     latitude: this.state.location.coords.latitude,
                     longitude: this.state.location.coords.longitude,
                     latitudeDelta: 0.09,
                     longitudeDelta: 0.04,
-                }}
-            >
-                <Marker
-                    coordinate={this.state.location.coords}
-                    title={"User Location"}
-                    description={"You are here!"}
-                    image={require("./assets/you-are-here.png")}
-                />
-            </MapView>
+                },
+            });
+        } else if (marker === "POI 1") {
+            this.setState({
+                selectedMarker: marker,
+                region: {
+                    latitude: this.state.poi1.coords.latitude,
+                    longitude: this.state.poi1.coords.longitude,
+                    latitudeDelta: 0.09,
+                    longitudeDelta: 0.04,
+                },
+            });
+        } else if (marker === "POI 2") {
+            this.setState({
+                selectedMarker: marker,
+                region: {
+                    latitude: this.state.poi2.coords.latitude,
+                    longitude: this.state.poi2.coords.longitude,
+                    latitudeDelta: 0.09,
+                    longitudeDelta: 0.04,
+                },
+            });
+        }
+    };
+
+    render() {
+        const { location, poi1, poi2, selectedMarker } = this.state;
+        return this.state.location ? (
+            <View style={styles.container}>
+                <MapView
+                    style={styles.map}
+                    region={this.state.region}
+                >
+                    <Marker
+                        coordinate={{
+                            latitude: location.coords.latitude,
+                            longitude: location.coords.longitude,
+                        }}
+                        title={"User Location"}
+                        description={"You are here!"}
+                        image={require("./assets/you-are-here.png")}
+                    />
+                    {selectedMarker === "POI 1" && (
+                        <Marker
+                            coordinate={{
+                                latitude: poi1.coords.latitude,
+                                longitude: poi1.coords.longitude
+                            }}
+                            title={"POI 1"}
+                            description={"POI 1 Description"}
+                        />
+                    )}
+                    {selectedMarker === "POI 2" && (
+                        <Marker
+                            coordinate={{
+                                latitude: poi2.coords.latitude,
+                                longitude: poi2.coords.longitude
+                            }}
+                            title={"POI 2"}
+                            description={"POI 2 Description"}
+                        />
+                    )}
+                </MapView>
+                <View style={styles.buttonsContainer}>
+                    <TouchableOpacity
+                        style={styles.button}
+                        onPress={() => this.handleButtonPress("you")}
+                    >
+                        <Text style={styles.buttonText}>You</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={styles.button}
+                        onPress={() => this.handleButtonPress("POI 1")}
+                    >
+                        <Text style={styles.buttonText}>POI 1</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={styles.button}
+                        onPress={() => this.handleButtonPress("POI 2")}
+                    >
+                        <Text style={styles.buttonText}>POI 2</Text>
+                    </TouchableOpacity>
+                </View>
+            </View >
         ) : null;
     }
 }
@@ -103,5 +183,16 @@ const styles = StyleSheet.create({
         flex: 7,
         width: Dimensions.get("window").width,
         height: Dimensions.get("window").height,
-    }
+    },
+    buttonsContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        paddingHorizontal: 10,
+    },
+    button: {
+        alignItems: 'center',
+        backgroundColor: '#DDDDDD',
+        padding: 6,
+    },
+
 });
