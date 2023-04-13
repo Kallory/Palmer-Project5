@@ -11,6 +11,7 @@ import {
     View,
     Alert,
 } from "react-native";
+import Animated, { Easing } from 'react-native-reanimated';
 
 export default class App extends Component {
     state = {
@@ -24,7 +25,36 @@ export default class App extends Component {
             latitudeDelta: 0.09,
             longitudeDelta: 0.04,
         },
+        notificationPosition: new Animated.Value(initialPosition),
+        windowHeight: Dimensions.get('window').height,
+        notificationHeight: 60,
+        initialPosition: -notificationHeight,
+        finalPosition: 0,
     };
+
+    constructor(props) {
+        super(props);
+        this.state = {
+            translateY: new Animated.Value(initialPosition),
+        };
+    }
+
+    showNotification = () => {
+        Animated.timing(this.state.translateY, {
+            toValue: finalPosition,
+            duration: 1000,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+        }).start(() => {
+            Animated.timing(this.state.translateY, {
+                toValue: initialPosition,
+                duration: 1000,
+                easing: Easing.inOut(Easing.ease),
+                useNativeDriver: true,
+            }).start();
+        });
+    };
+
 
     handleMarkerPress = (marker) => {
         this.setState({ selectedMarker: marker });
