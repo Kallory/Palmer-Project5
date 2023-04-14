@@ -10,8 +10,14 @@ import {
     TouchableOpacity,
     View,
     Alert,
+    Animated,
+    Easing,
 } from "react-native";
-import Animated, { Easing } from 'react-native-reanimated';
+
+const windowHeight = Dimensions.get('window').height;
+const notificationHeight = 60;
+const initialPosition = -notificationHeight;
+const finalPosition = 0;
 
 export default class App extends Component {
     state = {
@@ -25,19 +31,9 @@ export default class App extends Component {
             latitudeDelta: 0.09,
             longitudeDelta: 0.04,
         },
-        notificationPosition: new Animated.Value(initialPosition),
-        windowHeight: Dimensions.get('window').height,
-        notificationHeight: 60,
-        initialPosition: -notificationHeight,
-        finalPosition: 0,
+        notificationVisible: false,
+        notificationPosition: new Animated.Value(-notificationHeight)
     };
-
-    constructor(props) {
-        super(props);
-        this.state = {
-            translateY: new Animated.Value(initialPosition),
-        };
-    }
 
     showNotification = () => {
         Animated.timing(this.state.translateY, {
@@ -73,6 +69,20 @@ export default class App extends Component {
             console.log("Error: " + error);
             Alert.alert("Error in location.request", "" + error);
         }
+
+        Animated.timing(this.state.position, {
+            toValue: finalPosition,
+            duration: 1000, // animation duration in milliseconds
+            easing: Easing.linear, // easing function
+            delay: 500, // delay before animation starts
+        }).start(() => {
+            Animated.timing(this.state.position, {
+                toValue: initialPosition,
+                duration: 1000,
+                easing: Easing.linear,
+                delay: 2000, // wait for 2 seconds before animating back up
+            }).start();
+        });
     }
 
     async getLocation() {
@@ -100,6 +110,7 @@ export default class App extends Component {
             [{ text: 'OK' }]
         );
     }
+
     handleButtonPress = (marker) => {
         if (marker === "you") {
             this.setState({
@@ -135,8 +146,11 @@ export default class App extends Component {
     };
 
     render() {
+        console.log("beginning of render");
         const { location, poi1, poi2, selectedMarker } = this.state;
-        return this.state.location ? (
+        console.log(location.coords.latitude);
+        console.log(location.coords.longitude);
+        return (
             <View style={styles.container}>
                 <MapView
                     style={styles.map}
@@ -192,9 +206,13 @@ export default class App extends Component {
                         <Text style={styles.buttonText}>POI 2</Text>
                     </TouchableOpacity>
                 </View>
-            </View >
-        ) : null;
+                <Animated.View style={[styles.notification, { transform: [{ translateY: this.state.position }] }]}>
+                    <Text style={styles.notificationText}>This is a notification</Text>
+                </Animated.View>
+            </View>
+        );
     }
+
 }
 
 const styles = StyleSheet.create({
