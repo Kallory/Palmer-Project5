@@ -10,7 +10,13 @@ import {
     TouchableOpacity,
     View,
     Alert,
+    Animated,
+    Easing,
 } from "react-native";
+
+const notificationHeight = 200;
+const initialPosition = 0;
+const finalPosition = notificationHeight;
 
 export default class App extends Component {
     state = {
@@ -24,14 +30,21 @@ export default class App extends Component {
             latitudeDelta: 0.09,
             longitudeDelta: 0.04,
         },
+        notificationVisible: false,
+        notificationPosition: new Animated.Value(initialPosition)
     };
+
+
+
 
     handleMarkerPress = (marker) => {
         this.setState({ selectedMarker: marker });
     };
 
+    // Initial entry for execution
     async componentDidMount() {
         try {
+            // get permission to access location
             const permission = await Location.requestForegroundPermissionsAsync();
             if (permission.granted) {
                 console.log("permission granted");
@@ -43,6 +56,27 @@ export default class App extends Component {
             console.log("Error: " + error);
             Alert.alert("Error in location.request", "" + error);
         }
+
+        this.showNotification();
+    }
+
+    showNotification() {
+        Animated.timing(this.state.notificationPosition, {
+            toValue: finalPosition,
+            duration: 1000, // animation duration in milliseconds
+            easing: Easing.linear, // easing function
+            delay: 2000, // delay before animation starts
+            useNativeDriver: true,
+            notificationVisible: true,
+        }).start(() => {
+            Animated.timing(this.state.notificationPosition, {
+                toValue: initialPosition,
+                duration: 1000,
+                easing: Easing.linear,
+                delay: 4000, // wait for 2 seconds before animating back up
+                useNativeDriver: true,
+            }).start();
+        });
     }
 
     async getLocation() {
@@ -51,7 +85,7 @@ export default class App extends Component {
                 accuracy: Location.Accuracy.Low,
                 timeout: 100000,
             });
-            this.setState({ location: loc, currentLocation: loc });
+            this.setState({ location: loc });
         } catch (error) {
             console.log("Error: " + error);
             // this.checkLocationSettings();
@@ -70,6 +104,7 @@ export default class App extends Component {
             [{ text: 'OK' }]
         );
     }
+
     handleButtonPress = (marker) => {
         if (marker === "you") {
             this.setState({
@@ -108,6 +143,9 @@ export default class App extends Component {
         const { location, poi1, poi2, selectedMarker } = this.state;
         return this.state.location ? (
             <View style={styles.container}>
+                <Animated.View style={[styles.notification, { transform: [{ translateY: this.state.notificationPosition }], zIndex: 2 }]}>
+                    <Text style={styles.notificationText}>This is a notification</Text>
+                </Animated.View>
                 <MapView
                     style={styles.map}
                     region={this.state.region}
@@ -162,7 +200,8 @@ export default class App extends Component {
                         <Text style={styles.buttonText}>POI 2</Text>
                     </TouchableOpacity>
                 </View>
-            </View >
+
+            </View>
         ) : null;
     }
 }
