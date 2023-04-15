@@ -15,7 +15,7 @@ import {
 } from "react-native";
 
 const notificationHeight = 200;
-const initialPosition = 0;
+const initialPosition = -50;
 const finalPosition = notificationHeight;
 
 export default class App extends Component {
@@ -31,7 +31,8 @@ export default class App extends Component {
             longitudeDelta: 0.04,
         },
         notificationVisible: false,
-        notificationPosition: new Animated.Value(initialPosition)
+        notificationPosition: new Animated.Value(initialPosition),
+        locationChange: null,
     };
 
 
@@ -56,16 +57,15 @@ export default class App extends Component {
             console.log("Error: " + error);
             Alert.alert("Error in location.request", "" + error);
         }
-
-        this.showNotification();
     }
 
-    showNotification() {
+    showNotification(locationChange) {
+        this.setState({ locationChange: locationChange });
         Animated.timing(this.state.notificationPosition, {
             toValue: finalPosition,
             duration: 1000, // animation duration in milliseconds
             easing: Easing.linear, // easing function
-            delay: 2000, // delay before animation starts
+            delay: 500, // delay before animation starts
             useNativeDriver: true,
             notificationVisible: true,
         }).start(() => {
@@ -73,7 +73,7 @@ export default class App extends Component {
                 toValue: initialPosition,
                 duration: 1000,
                 easing: Easing.linear,
-                delay: 4000, // wait for 2 seconds before animating back up
+                delay: 2000, // wait for 2 seconds before animating back up
                 useNativeDriver: true,
             }).start();
         });
@@ -116,6 +116,7 @@ export default class App extends Component {
                     longitudeDelta: 0.04,
                 },
             });
+            this.showNotification("You");
         } else if (marker === "POI 1") {
             this.setState({
                 selectedMarker: marker,
@@ -126,6 +127,7 @@ export default class App extends Component {
                     longitudeDelta: 0.04,
                 },
             });
+            this.showNotification("POI 1");
         } else if (marker === "POI 2") {
             this.setState({
                 selectedMarker: marker,
@@ -136,15 +138,16 @@ export default class App extends Component {
                     longitudeDelta: 0.04,
                 },
             });
+            this.showNotification("POI 2");
         }
     };
 
     render() {
-        const { location, poi1, poi2, selectedMarker } = this.state;
+        const { location, poi1, poi2, selectedMarker, locationChange } = this.state;
         return this.state.location ? (
             <View style={styles.container}>
                 <Animated.View style={[styles.notification, { transform: [{ translateY: this.state.notificationPosition }], zIndex: 2 }]}>
-                    <Text style={styles.notificationText}>This is a notification</Text>
+                    <Text style={styles.notificationText}>Changed to {locationChange}</Text>
                 </Animated.View>
                 <MapView
                     style={styles.map}
@@ -233,5 +236,11 @@ const styles = StyleSheet.create({
         backgroundColor: '#DDDDDD',
         padding: 6,
     },
-
+    notification: {
+        backgroundColor: "#00000080",
+    },
+    notificationText: {
+        color: "#fff",
+        fontSize: 18,
+    }
 });
