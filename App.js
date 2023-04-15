@@ -14,10 +14,9 @@ import {
     Easing,
 } from "react-native";
 
-const windowHeight = Dimensions.get('window').height;
-const notificationHeight = 60;
-const initialPosition = -notificationHeight;
-const finalPosition = 0;
+const notificationHeight = 200;
+const initialPosition = 0;
+const finalPosition = notificationHeight;
 
 export default class App extends Component {
     state = {
@@ -32,32 +31,20 @@ export default class App extends Component {
             longitudeDelta: 0.04,
         },
         notificationVisible: false,
-        notificationPosition: new Animated.Value(-notificationHeight)
+        notificationPosition: new Animated.Value(initialPosition)
     };
 
-    showNotification = () => {
-        Animated.timing(this.state.translateY, {
-            toValue: finalPosition,
-            duration: 1000,
-            easing: Easing.inOut(Easing.ease),
-            useNativeDriver: true,
-        }).start(() => {
-            Animated.timing(this.state.translateY, {
-                toValue: initialPosition,
-                duration: 1000,
-                easing: Easing.inOut(Easing.ease),
-                useNativeDriver: true,
-            }).start();
-        });
-    };
+
 
 
     handleMarkerPress = (marker) => {
         this.setState({ selectedMarker: marker });
     };
 
+    // Initial entry for execution
     async componentDidMount() {
         try {
+            // get permission to access location
             const permission = await Location.requestForegroundPermissionsAsync();
             if (permission.granted) {
                 console.log("permission granted");
@@ -70,17 +57,24 @@ export default class App extends Component {
             Alert.alert("Error in location.request", "" + error);
         }
 
-        Animated.timing(this.state.position, {
+        this.showNotification();
+    }
+
+    showNotification() {
+        Animated.timing(this.state.notificationPosition, {
             toValue: finalPosition,
             duration: 1000, // animation duration in milliseconds
             easing: Easing.linear, // easing function
-            delay: 500, // delay before animation starts
+            delay: 2000, // delay before animation starts
+            useNativeDriver: true,
+            notificationVisible: true,
         }).start(() => {
-            Animated.timing(this.state.position, {
+            Animated.timing(this.state.notificationPosition, {
                 toValue: initialPosition,
                 duration: 1000,
                 easing: Easing.linear,
-                delay: 2000, // wait for 2 seconds before animating back up
+                delay: 4000, // wait for 2 seconds before animating back up
+                useNativeDriver: true,
             }).start();
         });
     }
@@ -91,7 +85,7 @@ export default class App extends Component {
                 accuracy: Location.Accuracy.Low,
                 timeout: 100000,
             });
-            this.setState({ location: loc, currentLocation: loc });
+            this.setState({ location: loc });
         } catch (error) {
             console.log("Error: " + error);
             // this.checkLocationSettings();
@@ -146,12 +140,12 @@ export default class App extends Component {
     };
 
     render() {
-        console.log("beginning of render");
         const { location, poi1, poi2, selectedMarker } = this.state;
-        console.log(location.coords.latitude);
-        console.log(location.coords.longitude);
-        return (
+        return this.state.location ? (
             <View style={styles.container}>
+                <Animated.View style={[styles.notification, { transform: [{ translateY: this.state.notificationPosition }], zIndex: 2 }]}>
+                    <Text style={styles.notificationText}>This is a notification</Text>
+                </Animated.View>
                 <MapView
                     style={styles.map}
                     region={this.state.region}
@@ -206,13 +200,10 @@ export default class App extends Component {
                         <Text style={styles.buttonText}>POI 2</Text>
                     </TouchableOpacity>
                 </View>
-                <Animated.View style={[styles.notification, { transform: [{ translateY: this.state.position }] }]}>
-                    <Text style={styles.notificationText}>This is a notification</Text>
-                </Animated.View>
-            </View>
-        );
-    }
 
+            </View>
+        ) : null;
+    }
 }
 
 const styles = StyleSheet.create({
